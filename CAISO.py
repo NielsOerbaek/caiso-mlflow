@@ -6,8 +6,7 @@ import sklearn.metrics as skm
 
 import prepros
 
-dataset_time = "2020-04-29"
-
+dataset_time = None
 mlflow.log_param("dataset_time", dataset_time)
 
 train_x, train_y, test_x, test_y = prepros.get_train_test(dataset_time)
@@ -33,7 +32,7 @@ class CAISO(mlflow.pyfunc.PythonModel):
         # Limit to workdays
         dem = y.loc[x["business_day"] == 1].values
         # Reshape to day/hour matrix
-        dem = dem.reshape((len(dem)//24, 24))
+        dem = dem[len(dem)%24:].reshape((len(dem)//24, 24))
         # Only last ten days
         dem = dem[-10:,]
         # Get index of three days with max average consumption
@@ -55,7 +54,6 @@ preds = model.predict(None, test_x)
 MAE = skm.mean_absolute_error(test_y, preds)
 mlflow.log_metric("MAE", MAE)
 print("MAE", MAE)
-
 
 r2 = skm.r2_score(test_y, preds)
 mlflow.log_metric("r2", r2)
